@@ -6,6 +6,7 @@ from random import randint, choice,uniform
 from playerInterface import *
 import sys
 import heuristics
+import copy
 from queue import PriorityQueue
 
 # Utilisée pour l'affichage
@@ -23,7 +24,47 @@ def next_elem_list(lst) :
 def next_elem_queue(queue) :
     return queue.get()[1],queue
 
+class Node():
+    estimated_win = np.full((9,9),0.0001)
+    node_score = 0
+    children = []
+    prior = None
+    coup = None
+    visited = 0
+
+
+    # Note : si le prior est None alors c'est que ce noeud correpond à root
+    def __init__(self,coup, prior) :
+        self.coup = coup
+        self.prior = prior
+
+    #TODO
+    #Créer tous les children quand on traite le noeud pour la première fois
+    def getConfidenceBound() :
+        return(self.node_score/self.visited + np.sqrt(C*(prior.visited-self.visited)/self.visited))
+
+    def updateScore(self,win) :
+        self.node_score  = self.node_score + win
+        self.visited += 1
+
+    def getBestMove(self) :
+        return max(range(len(self.children)), key=lambda i: self.children[i].node_score)
+
+    def getBestConfidence(self) :
+        return max(range(len(self.children)), key=lambda i: self.children[i].getConfidenceBound())
+
 class myPlayer(PlayerInterface):
+
+    def roll_game(self, b, playerTurn) :
+        board = copy.deepcopy(b)
+        while(not b._gameOver) :
+            b.push(self.getBestMove(b,playerTurn))
+            playerTurn = 3-playerTurn
+        res = b.result()
+        return [dico_win.get(res,[0.5,0.5])[2-playerTurn]]
+
+    def getBestMove(self,b,playerTurn) :
+
 
     def __init__(self):
         self._board = Goban.Board()
