@@ -64,7 +64,7 @@ class myPlayer(PlayerInterface):
         return [dico_win.get(res,[0.5,0.5])[2-playerTurn]]
 
     def getBestMove(self,b,playerTurn) :
-
+        pass
 
     def __init__(self):
         self._board = Goban.Board()
@@ -145,8 +145,6 @@ class myPlayer(PlayerInterface):
             return [True,maxi[1]]
         return [True,maxi[0]]
 
-
-
     def alpha_bet_f_id(self,b,coup,prof,maxprof,alpha,beta,timing, timeout,lst) :
         maxi = [0,alpha]
         if(b._gameOver) :
@@ -180,7 +178,6 @@ class myPlayer(PlayerInterface):
         if(prof == 1) :
             return [True,[queue,maxi]]
         return [True,maxi[1]]
-
 
     def alpha_bet_id(self,b,ami,timing,timeout) :
         coup_to_play = choice(self._board.legal_moves())
