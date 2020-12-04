@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import time
 import Goban
 from random import randint, choice,uniform
