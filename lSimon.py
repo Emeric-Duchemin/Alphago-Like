@@ -53,7 +53,7 @@ def doit():
     (_, legal) = gnugo.query("all_legal " + moves.player())
     proba_matrix = [[0 for i in range(9)] for j in range(9)]
     legal = legal.split(' ')[1:]
-    nb_rollout = 110 - min(100, len(legal) * 2)
+    nb_rollout = (110 - min(100, len(legal) * 2)) // 2 
     print( "\t0" + "/" + str(len(legal)), end="\r")
     for i, m in enumerate(legal):
         moves.playthis(m)
