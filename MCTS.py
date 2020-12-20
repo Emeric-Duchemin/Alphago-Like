@@ -29,9 +29,9 @@ class Casino():
     machine_mu = []
     _machines = []
 
-    def __init__(self, nb=100):
-        self.machine_mu = [-1 for i in range(nb)]
-        self.choosen_machines = [0.0001 for x in range(nb)] # "Waouh c'est quoi cette merde" JLB
+    def __init__(self, nb=100, mus = [-1 for i in range(nb)]):
+        self.machine_mu = mus
+        self.choosen_machines = [1 for x in range(nb)] # "Waouh c'est quoi cette merde" JLB
         for _ in range(nb):
             self._machines.append(oneBandit())
 
@@ -118,7 +118,13 @@ class myPlayer(PlayerInterface):
 
     def mcts(self,b):
         count = 0
+        proba_moves = get_priors(b)
+        proba_moves = get_only_legals(b,proba_moves)
+        casino = Casinos(len(proba_moves),proba_moves)
+        visited = [1 for i in proba_moves]
         while count < nb_run :
+            moving_board = copy.deepcopy(b)
+
 
 
     def run_mcts(self,dico,b):
