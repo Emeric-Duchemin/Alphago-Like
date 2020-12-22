@@ -13,7 +13,7 @@ model = tf.keras.models.model_from_json(loaded_model_json)
 model.load_weights("model.h5")
 
 # evaluate loaded model on test data
-model.compile(loss='mae', optimizer='adam', metrics=['accuracy'])
+#model.compile(loss='mae', optimizer='adam', metrics=['accuracy'])
 
 def adapt_data(data) :
     lst = []
@@ -82,3 +82,9 @@ def evaluate(b,turn,coup) :
     if(b._stringLiberties[b._getStringOfStone(coup)] <= 1):
         adv -= 0.1
     return res[0][2-turn] + adv
+
+def compute_priors(b) :
+    #priors = model.predict(board)
+    priors = [[0,0,0,0,0,0,0,0,0] for i in range(9)]
+    priors.append(0)
+    return priors

@@ -7,9 +7,11 @@ import heuristics
 from queue import PriorityQueue
 import numpy as np
 import random
+import sys
+import copy
 
 nb_machine = 100
-nb_run = 10000
+nb_run = 100
 C = 2
 
 
@@ -20,18 +22,19 @@ class oneBandit():
         else:
             self._mu = mu
 
-    def playIt(self):
-        return 1 if random.random() < self._mu else 0
 
 class Casino():
-    nb_coup = 0
+    nb_coup = 1
     choosen_machines = []
     machine_mu = []
     _machines = []
 
-    def __init__(self, nb=100, mus = [-1 for i in range(nb)]):
-        self.machine_mu = mus
-        self.choosen_machines = [1 for x in range(nb)] # "Waouh c'est quoi cette merde" JLB
+    def __init__(self, nb=100, mus = -1):
+        if(mus == -1) :
+            self.machine_mu = [-1 for i in range(nb)]
+        else :
+            self.machine_mu = mus
+        self.choosen_machines = [0.0001 for x in range(nb)] # "Waouh c'est quoi cette merde" JLB
         for _ in range(nb):
             self._machines.append(oneBandit())
 
@@ -45,11 +48,9 @@ class Casino():
         self.nb_coup += 1
         return play
 
-    def realBestChoice(self): # On triche si on l'utilise. Doit être utilisé que pour calculer le regret
-        return max(range(nb_machine), key=lambda i: self._machines[i]._mu)
 
     def compute_upper_confidence_bound(self,i):
-        return self.machine_mu[i] + np.sqrt(C*np.log(self.nb_coup-self.choosen_machines[i])/self.choosen_machines[i])
+        return self.machine_mu[i] + np.sqrt(np.abs(C*np.log(self.nb_coup-self.choosen_machines[i])) /self.choosen_machines[i])
 
 
 """
@@ -66,7 +67,7 @@ def casinoRun():
     print(casino.realBestChoice())
 """
 # Utilisée pour l'affichage
-dico_win = {"1-0":[1,0],"0-1":[0,1],}
+dico_win = {"1-0":[1,-1],"0-1":[-1,1],"1/2-1/2":[0,0]}
 
 #debugging function
 def eprint(*args, **kwargs):
@@ -118,19 +119,57 @@ class myPlayer(PlayerInterface):
 
     def mcts(self,b):
         count = 0
-        proba_moves = get_priors(b)
-        proba_moves = get_only_legals(b,proba_moves)
-        casino = Casinos(len(proba_moves),proba_moves)
+        proba_moves = self.get_priors(b)
+        legal_moves = b.legal_moves()
+        proba_moves = self.get_only_legals(legal_moves,proba_moves)
+        casino = Casino(len(proba_moves),proba_moves)
         visited = [1 for i in proba_moves]
+        moving_board = copy.deepcopy(b)
         while count < nb_run :
+            #sys.stderr.write(str(count)+"\n")
+            cestmonchoix = max(range(len(proba_moves)),key = lambda x : casino.compute_upper_confidence_bound(x))
+            moving_board.push(legal_moves[cestmonchoix])
+            reward = self.run_rollout(moving_board,3-self._mycolor,self._mycolor)
+            casino.machine_mu[cestmonchoix] = (casino.machine_mu[cestmonchoix] * casino.choosen_machines[cestmonchoix] + reward[1]) / (casino.choosen_machines[cestmonchoix] +1)
+            casino.choosen_machines[cestmonchoix] += 1
+            casino.nb_coup += 1
             moving_board = copy.deepcopy(b)
+            count += 1
+        sys.stderr.write(str(casino.machine_mu));
+        cestmonmeilleurchoix = max(range(len(proba_moves)),key = lambda x : casino.machine_mu[x])
+        return legal_moves[cestmonmeilleurchoix]
+
+
+    def run_rollout(self,b,color,init_color):
+        if(b._gameOver) :
+            res = b.result()
+            return [True,dico_win.get(res,[0.5,0.5])[init_color-1]]
+        lmoves = b.legal_moves()
+        move = self.choose_move_random(b,color,lmoves)
+        b.push(lmoves[move])
+        return self.run_rollout(b,3-color,init_color)
 
 
 
-    def run_mcts(self,dico,b):
+    def get_only_legals(self,lmoves, predicted):
+        toRet = []
+        for i in lmoves :
+            if i == -1 :
+                toRet.append(predicted[-1])
+            else :
+                index = self._board.unflatten(i)
+                toRet.append(predicted[index[0]][index[1]])
+        return toRet
 
 
-"""
+    def get_priors(self,b):
+        return heuristics.compute_priors(b)
+
+    def choose_move_random(self,b,color,lmoves) :
+        return random.choice(range(len(lmoves)))
+
+
+    """
     #Alpha beta
     def alpha_bet_e_id_opening(self,b,coup,prof,maxprof,alpha,beta,timing,timeout) :
         mini = beta
@@ -241,7 +280,7 @@ class myPlayer(PlayerInterface):
             deep += 0
             t1=time.time()
         return coup_to_play
-"""
+    """
 
     def getPlayerMove(self):
         timun = time.time()
@@ -255,7 +294,8 @@ class myPlayer(PlayerInterface):
             if(score[self._mycolor-1] > score[2-self._mycolor]) :
                 return "PASS"
         t1=time.time()
-        move = self.alpha_bet_id(self._board,True,t1,self.getTimer(self._board))
+        move = self.mcts(self._board)
+        sys.stderr.write(str(move))
         self._board.push(move)
         heuristics.evaluate(self._board,self._mycolor, None) # Show estimations
         self.nbmoves += 1
