@@ -4,13 +4,15 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.models import model_from_json
 
-# load json and create model
-json_file = open('model.json', 'r')
-loaded_model_json = json_file.read()
-json_file.close()
-model = tf.keras.models.model_from_json(loaded_model_json)
-# load weights into new model
-model.load_weights("model.h5")
+def load_model(mod) :
+    # load json and create model
+    json_file = open(mod+'.json', 'r')
+    loaded_model_json = json_file.read()
+    json_file.close()
+    model = tf.keras.models.model_from_json(loaded_model_json)
+    # load weights into new model
+    model.load_weights("mod'+'.h5")
+    return model
 
 # evaluate loaded model on test data
 #model.compile(loss='mae', optimizer='adam', metrics=['accuracy'])
@@ -40,7 +42,7 @@ def get_count_entries(coup,b,turn) :
         count +=1
     return count
 
-def evaluate(b,turn,coup) :
+def evaluate(model,b,turn,coup) :
     data = adapt_data(b._board)
     res = model.predict(data)
     if(coup == None):
@@ -83,8 +85,8 @@ def evaluate(b,turn,coup) :
         adv -= 0.1
     return res[0][2-turn] + adv
 
-def compute_priors(b) :
-    #priors = model.predict(board)
-    priors = [[0,0,0,0,0,0,0,0,0] for i in range(9)]
-    priors.append(0)
+def compute_priors(model,b) :
+    priors = model.predict(board)
+    #priors = [[0,0,0,0,0,0,0,0,0] for i in range(9)]
+    #priors.append(0)
     return priors

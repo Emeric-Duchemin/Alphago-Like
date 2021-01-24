@@ -9,6 +9,7 @@ import numpy as np
 import random
 import sys
 import copy
+from numpy.random import choice
 
 nb_machine = 100
 nb_run = 100
@@ -34,7 +35,7 @@ class Casino():
             self.machine_mu = [-1 for i in range(nb)]
         else :
             self.machine_mu = mus
-        self.choosen_machines = [0.0001 for x in range(nb)] # "Waouh c'est quoi cette merde" JLB
+        self.choosen_machines = [0.0001 for x in range(nb)]
         for _ in range(nb):
             self._machines.append(oneBandit())
 
@@ -83,11 +84,12 @@ def next_elem_queue(queue) :
 
 class myPlayer(PlayerInterface):
 
-    def __init__(self):
+    def __init__(self,model=''):
         self._board = Goban.Board()
         self._mycolor = None
         self.nbmoves = 0
         self.total_time = 0
+        self.model = heuristics.load_model(model)
 
     def getPlayerName(self):
         return "Clemeric"
@@ -118,6 +120,12 @@ class myPlayer(PlayerInterface):
             return (2 / 9) * nb + 2.8
 
     def mcts(self,b):
+        proba_moves,probas = self.mcts_probas(b)
+        legal_moves = b.legal_moves()
+        cestmonmeilleurchoix = max(range(len(proba_moves)),key = lambda x : probas[x])
+        return legal_moves[cestmonmeilleurchoix]
+
+    def mcts_probas(self,b) :
         count = 0
         proba_moves = self.get_priors(b)
         legal_moves = b.legal_moves()
@@ -135,9 +143,14 @@ class myPlayer(PlayerInterface):
             casino.nb_coup += 1
             moving_board = copy.deepcopy(b)
             count += 1
-        sys.stderr.write(str(casino.machine_mu));
-        cestmonmeilleurchoix = max(range(len(proba_moves)),key = lambda x : casino.machine_mu[x])
-        return legal_moves[cestmonmeilleurchoix]
+        sys.stderr.write(str(casino.machine_mu))
+        return proba_moves,casino.machine_mu
+
+        def get_randomized_best() :
+            proba_moves, probas = self.mcts_probas(b)
+            legal_moves = b.legal_moves()
+            cestmonchoix = choice(proba_moves,1,p=probas)
+            return legal_moves[cestmonchoix]
 
 
     def run_rollout(self,b,color,init_color):
@@ -162,8 +175,9 @@ class myPlayer(PlayerInterface):
         return toRet
 
 
+
     def get_priors(self,b):
-        return heuristics.compute_priors(b)
+        return heuristics.compute_priors(self.model,b)
 
     def choose_move_random(self,b,color,lmoves) :
         return random.choice(range(len(lmoves)))
@@ -297,7 +311,7 @@ class myPlayer(PlayerInterface):
         move = self.mcts(self._board)
         sys.stderr.write(str(move))
         self._board.push(move)
-        heuristics.evaluate(self._board,self._mycolor, None) # Show estimations
+        heuristics.evaluate(self.model,self._board,self._mycolor, None) # Show estimations
         self.nbmoves += 1
         self.total_time += time.time()-timun
         return self._board.flat_to_name(move)
@@ -315,3 +329,9 @@ class myPlayer(PlayerInterface):
             print("I won!!!")
         else:
             print("I lost :(!!")
+
+"""# TODO:
+- Le petit réseau de neurone double tête
+- La boucle de reinforcement
+- Scinder les deux
+"""
