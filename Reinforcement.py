@@ -15,6 +15,7 @@ def collecting_data_loop() :
     stri = " "
     model_champion1 = "model"
     for i in range(100):
+        print(i)
         sum = doit(model_champion1,model_champion1)
         stri += sum + ","
     with open('data_test.json', 'a') as outfile:

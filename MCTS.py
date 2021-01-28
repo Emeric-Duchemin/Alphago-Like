@@ -141,16 +141,14 @@ class myPlayer(PlayerInterface):
             casino.machine_mu[cestmonchoix] = (casino.machine_mu[cestmonchoix] * casino.choosen_machines[cestmonchoix] + reward[1]) / (casino.choosen_machines[cestmonchoix] +1)
             casino.choosen_machines[cestmonchoix] += 1
             casino.nb_coup += 1
-            moving_board.pop()
+            moving_board = copy.deepcopy(b)
             count += 1
         sys.stderr.write(str(casino.machine_mu))
         return proba_moves,casino.machine_mu, corresp
 
     def get_randomized_best(self) :
-        proba_moves, probas = self.mcts_probas(self._board)
+        proba_moves, probas,corresp = self.mcts_probas(self._board)
         legal_moves = self._board.legal_moves()
-        print("probas")
-        print(len(probas))
         cestmonchoix = random.choices(range(len(legal_moves)),weights=probas)[0]
         return legal_moves[corresp[cestmonchoix]]
 

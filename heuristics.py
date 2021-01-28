@@ -12,8 +12,6 @@ def load_model(mod) :
     model = tf.keras.models.model_from_json(loaded_model_json)
     # load weights into new model
     model.load_weights(mod+".h5")
-    model.summary()
-    print(model.layers[8].get_config())
     return model
 
 # evaluate loaded model on test data
@@ -93,8 +91,6 @@ def compute_priors(model,b) :
     nb_moves = b._nbWHITE +b._nbBLACK + b._capturedWHITE + b._capturedBLACK
     data = adapt_data(b._board,nb_moves)
     priors = model.predict(data)
-    print("Priors")
-    print(priors)
     #priors = [[0,0,0,0,0,0,0,0,0] for i in range(9)]
     #priors.append(0)
     return priors

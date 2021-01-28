@@ -51,7 +51,6 @@ def get_score_from_board(moves,gnugo,list_of_moves,epochs) :
     to_ret = [0 for i in range(82)]
     (ok,pro) = gnugo.query("all_legal " + player)
     (ok,proba) = moves._gnugo.query("top_moves" + player)
-    print(proba)
     """for i in range(epochs) :
         #gnugo.set_random_seed(i+101+102+12)
         choice  = gnugo.Moves.get_randomized_best()

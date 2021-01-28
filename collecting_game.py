@@ -63,8 +63,6 @@ class Game_RL() :
         return
 
     def play_this(self,m) :
-        print("salut")
-        print(m)
         self.b.push(m)
         self.list_of_moves.append(m)
         self.list_moves_colors[self.nextplayercolor-1].append(m)
