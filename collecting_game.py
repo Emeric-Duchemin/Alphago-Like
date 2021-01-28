@@ -3,27 +3,30 @@ import importlib
 import time
 from io import StringIO
 import Goban
+import numpy as np
 import myPlayer
+import MCTS
 
 class Game_RL() :
 
-    __init()__ :
+    def __init__(self,model_champion1, model_champion2) :
         self.b = Goban.Board()
         self.nextplayercolor = Goban.Board._BLACK
         self.nbmoves = 0
         self.list_moves_colors = [[],[]]
         self.list_of_moves = []
         self.player = []
+        self.initialize_player(model_champion1, model_champion2)
 
 
-    def initialize_player(model_champion1, model_champion2):
-        self.player.append(myPlayer.myPlayer(model_champion1))
-        self.player.append(myPlayer.myPlayer(model_champion2))
+    def initialize_player(self,model_champion1, model_champion2):
+        self.player.append(MCTS.myPlayer(model_champion1))
+        self.player.append(MCTS.myPlayer(model_champion2))
         self.player[0].newGame(Goban.Board._BLACK)
         self.player[1].newGame(Goban.Board._WHITE)
 
 
-    def play() :
+    def play(self) :
         while not b.is_game_over():
             nbmoves += 1
             otherplayer = (nextplayer + 1) % 2
@@ -60,9 +63,11 @@ class Game_RL() :
         return
 
     def play_this(self,m) :
-        self.b.push(Goban.Board.name_to_flat(move))
-        self.list_of_moves.append(move)
-        self.list_moves_colors[self.nextplayercolor-1].append(move)
+        print("salut")
+        print(m)
+        self.b.push(m)
+        self.list_of_moves.append(m)
+        self.list_moves_colors[self.nextplayercolor-1].append(m)
         self.nextplayercolor = 3 - self.nextplayercolor
         self.nbmoves += 1
         return

@@ -5,6 +5,7 @@ from playerInterface import *
 import sys
 import heuristics
 import copy
+import numpy as np
 from queue import PriorityQueue
 
 # Utilisée pour l'affichage
@@ -55,10 +56,10 @@ class myPlayer(PlayerInterface):
 
     def roll_game(self, b, playerTurn) :
         board = copy.deepcopy(b)
-        while(not b._gameOver) :
-            b.push(self.getBestMove(b,playerTurn))
+        while(not board._gameOver) :
+            board.push(self.getBestMove(board,playerTurn))
             playerTurn = 3-playerTurn
-        res = b.result()
+        res = board.result()
         return [dico_win.get(res,[0.5,0.5])[2-playerTurn]]
 
     def getBestMove(self,b,playerTurn) :

@@ -11,21 +11,24 @@ def load_model(mod) :
     json_file.close()
     model = tf.keras.models.model_from_json(loaded_model_json)
     # load weights into new model
-    model.load_weights("mod'+'.h5")
+    model.load_weights(mod+".h5")
+    model.summary()
+    print(model.layers[8].get_config())
     return model
 
 # evaluate loaded model on test data
 #model.compile(loss='mae', optimizer='adam', metrics=['accuracy'])
 
-def adapt_data(data) :
+def adapt_data(data,nb_moves) :
     lst = []
-    once = np.zeros((9,9,2))
+    once = np.zeros((9,9,3))
     for i in range(9) :
         for j in range(9) :
             if(data[i*9+j]==1) :
                 once[i][j][1] = 1
             if(data[i*9+j]==2) :
                 once[i][j][0] = 1
+    once[:][:][2].fill(nb_moves%2)
     lst.append(once)
     return np.asarray(lst)
 
@@ -43,7 +46,8 @@ def get_count_entries(coup,b,turn) :
     return count
 
 def evaluate(model,b,turn,coup) :
-    data = adapt_data(b._board)
+    nb_moves = b._nbWHITE +b._nbBLACK + b._capturedWHITE + b._capturedBLACK
+    data = adapt_data(b._board, nb_moves)
     res = model.predict(data)
     if(coup == None):
         test = res[0][turn-1]
@@ -86,7 +90,11 @@ def evaluate(model,b,turn,coup) :
     return res[0][2-turn] + adv
 
 def compute_priors(model,b) :
-    priors = model.predict(board)
+    nb_moves = b._nbWHITE +b._nbBLACK + b._capturedWHITE + b._capturedBLACK
+    data = adapt_data(b._board,nb_moves)
+    priors = model.predict(data)
+    print("Priors")
+    print(priors)
     #priors = [[0,0,0,0,0,0,0,0,0] for i in range(9)]
     #priors.append(0)
     return priors

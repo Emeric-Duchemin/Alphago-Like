@@ -68,7 +68,7 @@ def casinoRun():
     print(casino.realBestChoice())
 """
 # Utilisée pour l'affichage
-dico_win = {"1-0":[1,-1],"0-1":[-1,1],"1/2-1/2":[0,0]}
+dico_win = {"1-0":[1,0],"0-1":[0,1],"1/2-1/2":[0.5,0.5]}
 
 #debugging function
 def eprint(*args, **kwargs):
@@ -120,37 +120,39 @@ class myPlayer(PlayerInterface):
             return (2 / 9) * nb + 2.8
 
     def mcts(self,b):
-        proba_moves,probas = self.mcts_probas(b)
+        proba_moves,probas,corresp = self.mcts_probas(b)
         legal_moves = b.legal_moves()
         cestmonmeilleurchoix = max(range(len(proba_moves)),key = lambda x : probas[x])
-        return legal_moves[cestmonmeilleurchoix]
+        return legal_moves[corresp[cestmonmeilleurchoix]]
 
     def mcts_probas(self,b) :
         count = 0
         proba_moves = self.get_priors(b)
         legal_moves = b.legal_moves()
-        proba_moves = self.get_only_legals(legal_moves,proba_moves)
+        proba_moves, corresp = self.get_only_legals(legal_moves,proba_moves)
         casino = Casino(len(proba_moves),proba_moves)
         visited = [1 for i in proba_moves]
         moving_board = copy.deepcopy(b)
         while count < nb_run :
             #sys.stderr.write(str(count)+"\n")
             cestmonchoix = max(range(len(proba_moves)),key = lambda x : casino.compute_upper_confidence_bound(x))
-            moving_board.push(legal_moves[cestmonchoix])
+            moving_board.push(legal_moves[corresp[cestmonchoix]])
             reward = self.run_rollout(moving_board,3-self._mycolor,self._mycolor)
             casino.machine_mu[cestmonchoix] = (casino.machine_mu[cestmonchoix] * casino.choosen_machines[cestmonchoix] + reward[1]) / (casino.choosen_machines[cestmonchoix] +1)
             casino.choosen_machines[cestmonchoix] += 1
             casino.nb_coup += 1
-            moving_board = copy.deepcopy(b)
+            moving_board.pop()
             count += 1
         sys.stderr.write(str(casino.machine_mu))
-        return proba_moves,casino.machine_mu
+        return proba_moves,casino.machine_mu, corresp
 
-        def get_randomized_best() :
-            proba_moves, probas = self.mcts_probas(b)
-            legal_moves = b.legal_moves()
-            cestmonchoix = choice(proba_moves,1,p=probas)
-            return legal_moves[cestmonchoix]
+    def get_randomized_best(self) :
+        proba_moves, probas = self.mcts_probas(self._board)
+        legal_moves = self._board.legal_moves()
+        print("probas")
+        print(len(probas))
+        cestmonchoix = random.choices(range(len(legal_moves)),weights=probas)[0]
+        return legal_moves[corresp[cestmonchoix]]
 
 
     def run_rollout(self,b,color,init_color):
@@ -166,13 +168,16 @@ class myPlayer(PlayerInterface):
 
     def get_only_legals(self,lmoves, predicted):
         toRet = []
+        toRet2 = []
         for i in lmoves :
             if i == -1 :
-                toRet.append(predicted[-1])
+                toRet.append(predicted[0][0][-1])
+                toRet2.append(-1)
             else :
-                index = self._board.unflatten(i)
-                toRet.append(predicted[index[0]][index[1]])
-        return toRet
+                #index = self._board.unflatten(i)
+                toRet.append(predicted[0][0][i])
+                toRet2.append(lmoves[i])
+        return toRet,toRet2
 
 
 

@@ -1,8 +1,10 @@
 import MCTS
-import training_model
+from training_model import *
 import json
 import random
 import time
+from collecting_game import *
+import numpy as np
 from copy import deepcopy
 import os
 
@@ -11,9 +13,10 @@ def collecting_data_loop() :
         data = json.load(file)
     data = data[100:]
     stri = " "
+    model_champion1 = "model"
     for i in range(100):
-        sum = doit()
-        stri += sum + "," 
+        sum = doit(model_champion1,model_champion1)
+        stri += sum + ","
     with open('data_test.json', 'a') as outfile:
         #outfile.write(",")
         json.dump(data,',',sum)
@@ -48,7 +51,7 @@ def monte_carlo(game, moves, nbsamples = 100):
                 black_points += float(score[2:])
         list_of_moves = []
         epochs += 1
-        game = copydeepcopy(game_rem)
+        game = copy.deepcopy(game_rem)
     if(game.nextPlayer == 2) : # Si le prochain player est white
         return format(black_wins/float(nbsamples),'.2f')
     else :
@@ -60,24 +63,23 @@ def flatten(s):
     return (_dic[s[0]], int(s[1]) - 1)
 
 def doit(model_champion1, model_champion2):
-    game = gameRL(model_champion1, model_champion2)
+    game = Game_RL(model_champion1, model_champion2)
     #moves = gnugo.Moves(gnugo)
-    game = start(game, moves)
+    game = start(game)
     legal = game.b.legal_moves()
     #(_, legal) = gnugo.query("all_legal " + moves.player())
     proba_matrix = [[0 for i in range(9)] for j in range(9)]
     #legal = legal.split(' ')[1:]
     nb_rollout = (110 - min(100, len(legal) * 2)) // 2
     #print( "\t0" + "/" + str(len(legal)), end="\r")
+    game_rem = copy.deepcopy(game)
     for m in legal :
-        game_rem = copy.deepcopy(game)
         game.playthis(m)
         proba_win = monte_carlo(gnugo, moves, nb_rollout)
         game = copy.deepcopy(game_rem)
         flat_move = flatten(m)
         proba_matrix[flat_move[0]][flat_move[1]] = proba_win
         #print("\t" + str(i + 1) + "/" + str(len(legal)), end="\r")
-    game_rem = copy.deepcopy(game)
     game.playthis("PASS")
     game = copy.deepcopy(game_rem)
     proba_win_pass = monte_carlo(gnugo, moves, nb_rollout)
@@ -89,7 +91,7 @@ def doit(model_champion1, model_champion2):
                 "white_wins":0, "white_points":0, "player": moves.player()}
     return summary
 
-def start(game,moves):
+def start(game):
     n = random.randrange(40, 50)
     list_of_moves = []
     blackstones = []
@@ -154,3 +156,5 @@ def main_loop() :
         if(winning) :
             print("New model won")
             change_model()
+
+main_loop()
