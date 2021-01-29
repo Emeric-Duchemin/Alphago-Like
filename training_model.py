@@ -158,16 +158,16 @@ def create_predictions(data) :
         lst.append(cuatro)
     return np.asarray(lst)
 
-def adaptation_data() :
+def adaptation_data(data) :
     X = create_data(data)
     Y = create_predictions(data)
-    X_train,X_val,Y_train,Y_val = sklearn.model_selection.train_test_split(X_train,Y_train,test_size=0.33,shuffle=True)
+    X_train,X_val,Y_train,Y_val = sklearn.model_selection.train_test_split(X,Y,test_size=0.33,shuffle=True)
     tmp1 = []
     tmp2 = []
 
     for i in range(len(Y_train)):
       tmp1.append(np.array(Y_train[i][:-1]))
-      tmp2.append(np.array([Y_train[i][-1]]))
+      tmp2.append(np.array([Y_train[i][-1], 1 - Y_train[i][-1]]))
 
     Y_train = [np.array(tmp1), np.array(tmp2)]
 
@@ -176,7 +176,7 @@ def adaptation_data() :
 
     for i in range(len(Y_val)):
       tmp1.append(np.array(Y_val[i][:-1]))
-      tmp2.append(np.array([Y_val[i][-1]]))
+      tmp2.append(np.array([Y_val[i][-1], 1 - Y_val[i][-1]]))
 
     Y_val = [np.array(tmp1), np.array(tmp2)]
     return X_train,X_val,Y_train,Y_val

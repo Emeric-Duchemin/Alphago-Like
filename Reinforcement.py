@@ -7,15 +7,16 @@ from collecting_game import *
 import numpy as np
 from copy import deepcopy
 import os
+import copy
+
 
 def collecting_data_loop() :
     with open('data.json','r') as file :
         data = json.load(file)
-    data = data[100:]
+    data = data[1:]
     stri = " "
     model_champion1 = "model"
     for i in range(100):
-        print(i)
         sum = doit(model_champion1,model_champion1)
         stri += sum + ","
     with open('data_test.json', 'a') as outfile:
@@ -23,7 +24,7 @@ def collecting_data_loop() :
         json.dump(data,',',sum)
 
 
-def monte_carlo(game, moves, nbsamples = 100):
+def monte_carlo(game, game_rem, moves, nbsamples = 100):
     list_of_moves = [] # moves to backtrack
     epochs = 0 # Number of played games
     toret = []
@@ -31,7 +32,7 @@ def monte_carlo(game, moves, nbsamples = 100):
     white_wins = 0
     black_points = 0
     white_points = 0
-    game_rem = copy.deepcopy(game)
+    copy_game(game_rem,game)
     while epochs < nbsamples:
         nbmoves = 0
         while True :
@@ -52,7 +53,7 @@ def monte_carlo(game, moves, nbsamples = 100):
                 black_points += float(score[2:])
         list_of_moves = []
         epochs += 1
-        game = copy.deepcopy(game_rem)
+        copy_game(game,game_rem)
     if(game.nextPlayer == 2) : # Si le prochain player est white
         return format(black_wins/float(nbsamples),'.2f')
     else :
@@ -65,6 +66,7 @@ def flatten(s):
 
 def doit(model_champion1, model_champion2):
     game = Game_RL(model_champion1, model_champion2)
+    game_rem = Game_RL(model_champion1, model_champion2)
     #moves = gnugo.Moves(gnugo)
     game = start(game)
     legal = game.b.legal_moves()
@@ -73,17 +75,17 @@ def doit(model_champion1, model_champion2):
     #legal = legal.split(' ')[1:]
     nb_rollout = (110 - min(100, len(legal) * 2)) // 2
     #print( "\t0" + "/" + str(len(legal)), end="\r")
-    game_rem = copy.deepcopy(game)
+    copy_game(game_rem,game)
     for m in legal :
-        game.playthis(m)
-        proba_win = monte_carlo(gnugo, moves, nb_rollout)
-        game = copy.deepcopy(game_rem)
+        game.play_this(m)
+        proba_win = monte_carlo(game, game_rem,game.list_of_moves, nb_rollout)
+        copy_game(game,game_rem)
         flat_move = flatten(m)
         proba_matrix[flat_move[0]][flat_move[1]] = proba_win
         #print("\t" + str(i + 1) + "/" + str(len(legal)), end="\r")
-    game.playthis("PASS")
-    game = copy.deepcopy(game_rem)
-    proba_win_pass = monte_carlo(gnugo, moves, nb_rollout)
+    game.play_this("PASS")
+    copy_game(game,game_rem)
+    proba_win_pass = monte_carlo(game, game_rem, game.list_of_moves, nb_rollout)
     summary = {"depth": len(list_of_moves), "list_of_moves": list_of_moves,
                 "black_stones":blackstones, "white_stones": whitestones,
                 "rollouts":nb_rollout,
@@ -91,6 +93,14 @@ def doit(model_champion1, model_champion2):
                 "black_wins":0, "black_points": 0,
                 "white_wins":0, "white_points":0, "player": moves.player()}
     return summary
+
+def copy_game(game1,game2) :
+    game1.b = copy.deepcopy(game2.b)
+    game1.nextplayercolor = game2.nextplayercolor
+    game1.nbmoves = game2.nbmoves
+    game1.list_moves_colors = copy.deepcopy(game2.list_moves_colors)
+    game1.list_of_moves = copy.deepcopy(game2.list_of_moves)
+    #game1.player = copy.deepcopy(game2.player)
 
 def start(game):
     n = random.randrange(40, 50)
@@ -139,9 +149,10 @@ def change_model() :
     os.rename("data_test.json","data.json")
 
 def training_model() :
-    data = json.load_json("data_test.json")
-    model = training_model.instanciate_model()
-    x_train,y_train,x_val,y_val = training_model.adaptation_data(data)
+    with open('data_test.json') as json_file :
+        data  = json.load(json_file)
+    model = instanciate_model()
+    x_train,x_val,y_train,y_val = adaptation_data(data)
     model.fit(x_train, y_train, validation_data=(x_val,y_val), epochs=20, batch_size=128,verbose=0)
     model_json = model.to_json()
     with open("model_test.json", "w") as json_file:

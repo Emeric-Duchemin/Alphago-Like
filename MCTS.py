@@ -85,7 +85,6 @@ def next_elem_queue(queue) :
 class myPlayer(PlayerInterface):
 
     def __init__(self,model=''):
-        self._board = Goban.Board()
         self._mycolor = None
         self.nbmoves = 0
         self.total_time = 0
@@ -123,7 +122,7 @@ class myPlayer(PlayerInterface):
         proba_moves,probas,corresp = self.mcts_probas(b)
         legal_moves = b.legal_moves()
         cestmonmeilleurchoix = max(range(len(proba_moves)),key = lambda x : probas[x])
-        return legal_moves[corresp[cestmonmeilleurchoix]]
+        return corresp[cestmonmeilleurchoix]
 
     def mcts_probas(self,b) :
         count = 0
@@ -136,21 +135,21 @@ class myPlayer(PlayerInterface):
         while count < nb_run :
             #sys.stderr.write(str(count)+"\n")
             cestmonchoix = max(range(len(proba_moves)),key = lambda x : casino.compute_upper_confidence_bound(x))
-            moving_board.push(legal_moves[corresp[cestmonchoix]])
+            moving_board.push(corresp[cestmonchoix])
             reward = self.run_rollout(moving_board,3-self._mycolor,self._mycolor)
             casino.machine_mu[cestmonchoix] = (casino.machine_mu[cestmonchoix] * casino.choosen_machines[cestmonchoix] + reward[1]) / (casino.choosen_machines[cestmonchoix] +1)
             casino.choosen_machines[cestmonchoix] += 1
             casino.nb_coup += 1
             moving_board = copy.deepcopy(b)
             count += 1
-        sys.stderr.write(str(casino.machine_mu))
+        #sys.stderr.write(str(casino.machine_mu))
         return proba_moves,casino.machine_mu, corresp
 
-    def get_randomized_best(self) :
-        proba_moves, probas,corresp = self.mcts_probas(self._board)
-        legal_moves = self._board.legal_moves()
+    def get_randomized_best(self,b) :
+        proba_moves, probas,corresp = self.mcts_probas(b)
+        legal_moves = b.legal_moves()
         cestmonchoix = random.choices(range(len(legal_moves)),weights=probas)[0]
-        return legal_moves[corresp[cestmonchoix]]
+        return corresp[cestmonchoix]
 
 
     def run_rollout(self,b,color,init_color):
@@ -174,7 +173,7 @@ class myPlayer(PlayerInterface):
             else :
                 #index = self._board.unflatten(i)
                 toRet.append(predicted[0][0][i])
-                toRet2.append(lmoves[i])
+                toRet2.append(i)
         return toRet,toRet2
 
 

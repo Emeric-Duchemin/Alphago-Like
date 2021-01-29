@@ -58,7 +58,8 @@ class Game_RL() :
             print("Round time", time.time() - currentTime)
 
     def play_randomized_best(self):
-        m = self.player[self.nextplayercolor-1].get_randomized_best()
+        m = self.player[self.nextplayercolor-1].get_randomized_best(self.b)
+        print(m)
         self.play_this(m)
         return
 
