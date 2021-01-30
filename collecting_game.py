@@ -18,16 +18,17 @@ class Game_RL() :
         self.player = []
         self.initialize_player(model_champion1, model_champion2)
 
-
+    # On Initialise ls deux players qui joueront leur partie
     def initialize_player(self,model_champion1, model_champion2):
         self.player.append(MCTS.myPlayer(model_champion1))
         self.player.append(MCTS.myPlayer(model_champion2))
         self.player[0].newGame(Goban.Board._BLACK)
         self.player[1].newGame(Goban.Board._WHITE)
 
-
+    # Fonction de jeux d'un plateau
     def play(self) :
         while not b.is_game_over():
+
             nbmoves += 1
             otherplayer = (nextplayer + 1) % 2
             othercolor = Goban.Board.flip(nextplayercolor)
@@ -57,12 +58,14 @@ class Game_RL() :
 
             print("Round time", time.time() - currentTime)
 
+    # Joue le coup random pondéré dans le plateau puis change de joueur
     def play_randomized_best(self):
         m = self.player[self.nextplayercolor-1].get_randomized_best(self.b)
         print(m)
         self.play_this(m)
         return
 
+    # Joue le coup demandé et met à jours les différents attributs inhérents à la classe
     def play_this(self,m) :
         self.b.push(m)
         self.list_of_moves.append(m)
@@ -70,7 +73,7 @@ class Game_RL() :
         self.nextplayercolor = 3 - self.nextplayercolor
         self.nbmoves += 1
         return
-
+    # Affiche le résultat de la partie jouée
     def result(self) :
         return self.b.result()
 

@@ -102,7 +102,7 @@ class myPlayer(PlayerInterface):
             return b._board[i]
 
     def patternFound(self, pattern, b):
-        # On suppose que les paternes sont rectangulaires (on pourra faire autrement mais c'est pas fun)
+        # On suppose que les patern sont rectangulaires (on pourra faire autrement mais c'est pas fun)
         l, h = pattern(0, 0)
         s = 0
         for i in range(10-h):
@@ -118,40 +118,46 @@ class myPlayer(PlayerInterface):
         else:
             return (2 / 9) * nb + 2.8
 
+    # Appel de l'algorithme de MCTS.
     def mcts(self,b):
         proba_moves,probas,corresp = self.mcts_probas(b)
         legal_moves = b.legal_moves()
         cestmonmeilleurchoix = max(range(len(proba_moves)),key = lambda x : probas[x])
         return corresp[cestmonmeilleurchoix]
 
+    # Fonction qui permet de récupérer les probas associées à MCTS
+    # On a donc en sorti les mu de chaque machine ainsi qu'une liste de probabilité de coups.
     def mcts_probas(self,b) :
         count = 0
+        # On instancie un Casino et on calcule quels priors peuvent effectivement être joué et lesquels ne peuvent pas.
         proba_moves = self.get_priors(b)
         legal_moves = b.legal_moves()
         proba_moves, corresp = self.get_only_legals(legal_moves,proba_moves)
         casino = Casino(len(proba_moves),proba_moves)
         visited = [1 for i in proba_moves]
         moving_board = copy.deepcopy(b)
+        # On lance nb_run pour mettre à jour la liste de priors.
         while count < nb_run :
-            #sys.stderr.write(str(count)+"\n")
             cestmonchoix = max(range(len(proba_moves)),key = lambda x : casino.compute_upper_confidence_bound(x))
             moving_board.push(corresp[cestmonchoix])
+            # On lance un rollout à partir du coup joué
             reward = self.run_rollout(moving_board,3-self._mycolor,self._mycolor)
+            # On met à jour les priors avec les résultats obtenus lors du rollout
             casino.machine_mu[cestmonchoix] = (casino.machine_mu[cestmonchoix] * casino.choosen_machines[cestmonchoix] + reward[1]) / (casino.choosen_machines[cestmonchoix] +1)
             casino.choosen_machines[cestmonchoix] += 1
             casino.nb_coup += 1
             moving_board = copy.deepcopy(b)
             count += 1
-        #sys.stderr.write(str(casino.machine_mu))
         return proba_moves,casino.machine_mu, corresp
 
+    # Choisi un coup parmi la liste des coups possibles en pondérant le choix avec les probabilité données par les priors
     def get_randomized_best(self,b) :
         proba_moves, probas,corresp = self.mcts_probas(b)
         legal_moves = b.legal_moves()
         cestmonchoix = random.choices(range(len(legal_moves)),weights=probas)[0]
         return corresp[cestmonchoix]
 
-
+    # Lance un rollout à partir de l'état de jeux dans lequel on est déjà placé
     def run_rollout(self,b,color,init_color):
         if(b._gameOver) :
             res = b.result()
@@ -162,7 +168,7 @@ class myPlayer(PlayerInterface):
         return self.run_rollout(b,3-color,init_color)
 
 
-
+    # Fonction qui permet de ne récupérer que les case pouvant être effectivement jouée
     def get_only_legals(self,lmoves, predicted):
         toRet = []
         toRet2 = []
@@ -177,10 +183,10 @@ class myPlayer(PlayerInterface):
         return toRet,toRet2
 
 
-
+    # Retourne les priors
     def get_priors(self,b):
         return heuristics.compute_priors(self.model,b)
-
+    # Joue aléatoirement
     def choose_move_random(self,b,color,lmoves) :
         return random.choice(range(len(lmoves)))
 

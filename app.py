@@ -46,7 +46,7 @@ def get_prediction():
         #Write in file
     (ok, _) = gnugo.query("quit")
 
-
+# Fonction qui récupère le score du plateau Gnugo
 def get_score_from_board(moves,gnugo,list_of_moves,epochs) :
     to_ret = [0 for i in range(82)]
     (ok,pro) = gnugo.query("all_legal " + player)

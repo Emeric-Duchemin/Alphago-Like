@@ -16,6 +16,9 @@ import functools
 import operator
 import sys
 
+#Instancie le modèle à deux tête qui permet :
+#    - un qui permet l'évaluation du plateau
+#    - le second qui donne les coups les plus probables à jouer
 def instanciate_model() :
     model = Sequential()
     imputs = Input(shape=(9,9,3))
@@ -47,6 +50,8 @@ def name_to_coord(s):
     lin = int(s[1:]) - 1
     return col, lin
 
+# Fonction qui permet d'adapter les données à l'entrée désirée par le modèle.
+# Réalise aussi l'augmentation de données
 def create_data(data):
     lst = []
     for i in data :
@@ -58,6 +63,7 @@ def create_data(data):
             if(j != "PASS") :
                 once[name_to_coord(j)[0]][name_to_coord(j)[1]][0] = 1
         once[:][:][2].fill(i["depth"]%2)
+        # Calcul de toutes les rotations
         dos = np.rot90(once,axes=(0,1))
         tres = np.rot90(dos,axes=(0,1))
         cuatro = np.rot90(tres,axes=(0,1))
@@ -84,6 +90,7 @@ def create_data(data):
     lst = np.asarray(lst)
     return lst
 
+# Créé les Y associés aux X déjà calculés dans la fonction create_data
 def create_predictions(data) :
     lst = []
     for i in data :
@@ -95,7 +102,7 @@ def create_predictions(data) :
             if len(once[k][j]) > 1:
               s += float(once[k][j])
               nb += 1
-
+        #On calcule toutes les rotations et on leur affecte le Y correspondant.
         dos = np.rot90(once,axes=(0,1))
         tres = np.rot90(dos,axes=(0,1))
         cuatro = np.rot90(tres,axes=(0,1))
@@ -158,13 +165,15 @@ def create_predictions(data) :
         lst.append(cuatro)
     return np.asarray(lst)
 
+# Fonction qui adapte les data à donner au modèle pour l'entraînement
 def adaptation_data(data) :
     X = create_data(data)
     Y = create_predictions(data)
+    #On sépare entre entraînement et validation
     X_train,X_val,Y_train,Y_val = sklearn.model_selection.train_test_split(X,Y,test_size=0.33,shuffle=True)
     tmp1 = []
     tmp2 = []
-
+    # On adapte le format des Y, résultats lors de l'apprentissage
     for i in range(len(Y_train)):
       tmp1.append(np.array(Y_train[i][:-1]))
       tmp2.append(np.array([Y_train[i][-1], 1 - Y_train[i][-1]]))
